@@ -1,0 +1,469 @@
+% vim: set textwidth=120:
+
+% Example CV based on the 1.5-column-cv template. Main features:
+% * uses the Roboto font family and IcoMoon icon set;
+% * doesn't use colours, different font weights are used instead for styling;
+% * because the CV fits on one page, header and footer is empty, since there isn't much useful info to put there;
+% * includes a photo.
+\documentclass[a4paper,10pt]{article}
+
+
+% package imports
+% ---------------
+
+\usepackage[british]{babel} % for correct language and hyphenation and stuff
+\usepackage{calc}           % for easier length calculations (infix notation)
+\usepackage{enumitem}       % for configuring list environments
+\usepackage{fancyhdr}       % for setting header and footer
+\usepackage{fontspec}       % for fonts
+\usepackage{geometry}       % for setting margins (\newgeometry)
+\usepackage{graphicx}       % for pictures
+\usepackage{microtype}      % for microtypography stuff
+\usepackage{xcolor}         % for colours
+
+
+% margin and column widths
+% ------------------------
+
+% margins
+\newgeometry{left=15mm,right=15mm,top=15mm,bottom=15mm}
+
+% width of the gap between left and right column
+\newlength{\cvcolumngapwidth}
+\setlength{\cvcolumngapwidth}{3.5mm}
+
+% left column width
+\newlength{\cvleftcolumnwidth}
+\setlength{\cvleftcolumnwidth}{44.5mm}
+
+% right column width
+\newlength{\cvrightcolumnwidth}
+\setlength{\cvrightcolumnwidth}{\textwidth-\cvleftcolumnwidth-\cvcolumngapwidth}
+
+% set paragraph indentation to 0, because it screws up the whole layout otherwise
+\setlength{\parindent}{0mm}
+
+
+% style definitions
+% -----------------
+% style categories explanation:
+% * \cvnameXXX is used for the name;
+% * \cvsectionXXX is used for section names (left column, accompanied by a horizontal rule);
+% * \cvtitleXXX is used for job/education titles (right column);
+% * \cvdurationXXX is used for job/education durations (left column);
+% * \cvheadingXXX is used for headings (left column);
+% * \cvmainXXX (and \setmainfont) is used for main text;
+% * \cvruleXXX is used for the horizontal rules denoting sections.
+
+% font families
+\defaultfontfeatures{Ligatures=TeX} % reportedly a good idea, see https://tex.stackexchange.com/a/37251
+
+\newfontfamily{\cvnamefont}[Path=resources/Roboto/]{Roboto-Medium.ttf}
+\newfontfamily{\cvsectionfont}[Path=resources/Roboto/]{Roboto-Medium.ttf}
+\newfontfamily{\cvtitlefont}[Path=resources/Roboto/]{Roboto-Regular.ttf}
+\newfontfamily{\cvdurationfont}[Path=resources/Roboto/]{Roboto-LightItalic.ttf}
+\newfontfamily{\cvheadingfont}[Path=resources/Roboto/]{Roboto-Regular.ttf}
+\setmainfont[Path=resources/Roboto/]{Roboto-Light.ttf}
+
+% colours
+\definecolor{cvnamecolor}{HTML}{000000}
+\definecolor{cvsectioncolor}{HTML}{000000}
+\definecolor{cvtitlecolor}{HTML}{000000}
+\definecolor{cvdurationcolor}{HTML}{000000}
+\definecolor{cvheadingcolor}{HTML}{000000}
+\definecolor{cvmaincolor}{HTML}{000000}
+\definecolor{cvrulecolor}{HTML}{000000}
+
+\color{cvmaincolor}
+
+% styles
+\newcommand{\cvnamestyle}[1]{{\Large\cvnamefont\textcolor{cvnamecolor}{#1}}}
+\newcommand{\cvsectionstyle}[1]{{\normalsize\cvsectionfont\textcolor{cvsectioncolor}{#1}}}
+\newcommand{\cvtitlestyle}[1]{{\large\cvtitlefont\textcolor{cvtitlecolor}{#1}}}
+\newcommand{\cvdurationstyle}[1]{{\small\cvdurationfont\textcolor{cvdurationcolor}{#1}}}
+\newcommand{\cvheadingstyle}[1]{{\normalsize\cvheadingfont\textcolor{cvheadingcolor}{#1}}}
+
+
+% inter-item spacing
+% ------------------
+
+% vertical space after personal info and standard CV items
+\newlength{\cvafteritemskipamount}
+\setlength{\cvafteritemskipamount}{5mm plus 1.25mm minus 1.25mm}
+
+% vertical space after sections
+\newlength{\cvaftersectionskipamount}
+\setlength{\cvaftersectionskipamount}{2mm plus 0.5mm minus 0.5mm}
+
+% extra vertical space to be used when a section starts with an item with a heading (e.g. in the skills section),
+% so that the heading does not follow the section name too closely
+\newlength{\cvbetweensectionandheadingextraskipamount}
+\setlength{\cvbetweensectionandheadingextraskipamount}{1mm plus 0.25mm minus 0.25mm}
+
+
+% intra-item spacing
+% ------------------
+
+% vertical space after name
+\newlength{\cvafternameskipamount}
+\setlength{\cvafternameskipamount}{3mm plus 0.75mm minus 0.75mm}
+
+% vertical space after personal info lines
+\newlength{\cvafterpersonalinfolineskipamount}
+\setlength{\cvafterpersonalinfolineskipamount}{2mm plus 0.5mm minus 0.5mm}
+
+% vertical space after titles
+\newlength{\cvaftertitleskipamount}
+\setlength{\cvaftertitleskipamount}{1mm plus 0.25mm minus 0.25mm}
+
+% value to be used as parskip in right column of CV items and itemsep in lists (same for both, for consistency)
+\newlength{\cvparskip}
+\setlength{\cvparskip}{0.5mm plus 0.125mm minus 0.125mm}
+
+% set global list configuration (use parskip as itemsep, and no separation otherwise)
+\setlist{parsep=0mm,topsep=0mm,partopsep=0mm,itemsep=\cvparskip}
+
+
+% CV commands
+% -----------
+
+% creates a "personal info" CV item with the given left and right column contents, with appropriate vertical space after
+% @param #1 left column content (should be the CV photo)
+% @param #2 right column content (should be the name and personal info)
+\newcommand{\cvpersonalinfo}[2]{
+    % left and right column
+    \begin{minipage}[t]{\cvleftcolumnwidth}
+        \vspace{0mm} % XXX hack to align to top, see https://tex.stackexchange.com/a/11632
+        \raggedleft #1
+    \end{minipage}% XXX necessary comment to avoid unwanted space
+    \hspace{\cvcolumngapwidth}% XXX necessary comment to avoid unwanted space
+    \begin{minipage}[t]{\cvrightcolumnwidth}
+        \vspace{0mm} % XXX hack to align to top, see https://tex.stackexchange.com/a/11632
+        #2
+    \end{minipage}
+
+    % space after
+    \vspace{\cvafteritemskipamount}
+}
+
+% typesets a name, with appropriate vertical space after
+% @param #1 name text
+\newcommand{\cvname}[1]{
+    % name
+    \cvnamestyle{#1}
+
+    % space after
+    \vspace{\cvafternameskipamount}
+}
+
+% typesets a line of personal info beginning with an icon, with appropriate vertical space after
+% @param #1 parameters for the \includegraphics command used to include the icon
+% @param #2 icon filename
+% @param #3 line text
+\newcommand{\cvpersonalinfolinewithicon}[3]{
+    % icon, vertically aligned with text (see https://tex.stackexchange.com/a/129463)
+    \raisebox{.5\fontcharht\font`E-.5\height}{\includegraphics[#1]{#2}}
+    % text
+    #3
+
+    % space after
+    \vspace{\cvafterpersonalinfolineskipamount}
+}
+
+% creates a "section" CV item with the given left column content, a horizontal rule in the right column, and with
+% appropriate vertical space after
+% @param #1 left column content (should be the section name)
+\newcommand{\cvsection}[1]{
+    % left and right column
+    \begin{minipage}[t]{\cvleftcolumnwidth}
+        \raggedleft\cvsectionstyle{#1}
+    \end{minipage}% XXX necessary comment to avoid unwanted space
+    \hspace{\cvcolumngapwidth}% XXX necessary comment to avoid unwanted space
+    \begin{minipage}[t]{\cvrightcolumnwidth}
+        \textcolor{cvrulecolor}{\rule{\cvrightcolumnwidth}{0.3mm}}
+    \end{minipage}
+
+    % space after
+    \vspace{\cvaftersectionskipamount}
+}
+
+% creates a standard, multi-purpose CV item with the given left and right column contents, parskip set to cvparskip
+% in the right column, and with appropriate vertical space after
+% @param #1 left column content
+% @param #2 right column content
+\newcommand{\cvitem}[2]{
+    % left and right column
+    \begin{minipage}[t]{\cvleftcolumnwidth}
+        \raggedleft #1
+    \end{minipage}% XXX necessary comment to avoid unwanted space
+    \hspace{\cvcolumngapwidth}% XXX necessary comment to avoid unwanted space
+    \begin{minipage}[t]{\cvrightcolumnwidth}
+        \setlength{\parskip}{\cvparskip} #2
+    \end{minipage}
+
+    % space after
+    \vspace{\cvafteritemskipamount}
+}
+
+% typesets a title, with appropriate vertical space after
+% @param #1 title text
+\newcommand{\cvtitle}[1]{
+    % title
+    \cvtitlestyle{#1}
+
+    % space after
+    \vspace{\cvaftertitleskipamount}
+    % XXX need to subtract cvparskip here, because it is automatically inserted after the title "paragraph"
+    \vspace{-\cvparskip}
+}
+
+
+% header and footer
+% -----------------
+
+% set empty header and footer
+\pagestyle{empty}
+
+
+
+% preamble end/document start
+% ===========================
+
+\begin{document}
+
+
+% personal info
+% -------------
+
+\cvpersonalinfo{
+    % photo
+    \includegraphics[height=36mm]{resources/photo.jpg}
+}{
+    % name
+    \cvname{Dmitry Eliseev}
+
+    % address
+    \cvpersonalinfolinewithicon{height=4mm}{resources/IcoMoon-Free-PDF/072-location.pdf}{
+        U Dekanky 1642/4, Praha, Nusle, 140 00, Czech Republic
+    }
+
+    % phone number
+    \cvpersonalinfolinewithicon{height=4mm}{resources/IcoMoon-Free-PDF/067-phone.pdf}{
+        +420 727\,875\,930
+    }
+
+    % email address
+    \cvpersonalinfolinewithicon{height=4mm}{resources/IcoMoon-Free-PDF/070-envelop.pdf}{
+        dmitry.eliseev@seznam.cz
+    }
+
+    % LinkedIn account
+    \cvpersonalinfolinewithicon{height=4mm}{resources/IcoMoon-Free-PDF/458-linkedin.pdf}{
+        dmitry-eliseev-00777228
+    }
+
+    % date of birth
+    Born 13 March 1976
+}
+
+
+% work experience
+% ---------------
+
+\cvsection{WORK EXPERIENCE}
+
+\cvitem{
+    \cvdurationstyle{Jan 2019 -- present}
+}{
+    \cvtitle{Java Application Developer}
+
+    Oracle, Prague
+
+    \begin{itemize}[leftmargin=*]
+        \item Support old libraries. Design new libraries for AI application.
+        \item Provide integration libraries with Oracle Cloud Infrastructure (OCI).
+        \item Design of complete project lifecycle applications. Implementation of new functionality.
+        \item Implement different functional component of application.
+    \end{itemize}
+    
+    \textit{Technologies}: Java, OCI, maven, git, jira
+}
+
+\cvitem{
+    \cvdurationstyle{May 2017 -- Dec 2019}
+}{
+    \cvtitle{Senior Scala Developer}
+
+    EPAM, Prague
+
+    \begin{itemize}[leftmargin=*]
+        \item Design, implementation \& support of invest bank Big Data applications
+        \item Design of complete project lifecycle applications. Implementation of new functionality.
+        \item Implement different functional component of application.
+    \end{itemize}
+    
+    \textit{Technologies}: Scala, Spark, Kafka, Hive, Hadoop, maven, git, jira
+}
+\cvitem{
+    \cvdurationstyle{Dec 2015 -- Apr 2017}
+}{
+    \cvtitle{Lead Java Developer}
+
+    Luxoft, Saint-Petersburg
+    
+    \begin{itemize}[leftmargin=*]
+        \item Design, implementation \& support of various applications.
+        \item Refactoring legacy code. Design of complete project lifecycle applications. Implementation of new functionality.
+        \item Improved application capacity and performance
+    \end{itemize}
+    
+    \textit{Technologies}: ESAPI, Spring, HTML, CSS, javascript, Hibernate, Java Mail, JMS, git, jira, jenkins
+}
+\cvitem{
+    \cvdurationstyle{Nov 2014 -- Dec 2015}
+}{
+    \cvtitle{Senior Java Developer}
+
+    Luxoft, Saint-Petersburg
+    
+    \begin{itemize}[leftmargin=*]
+        \item Design, implementation \& support of various applications.
+        \item Refactoring legacy code. Design of complete project lifecycle applications. Implementation of new functionality.
+        \item Improved application capacity and performance.
+    \end{itemize}
+
+    \textit{Technologies}: ESAPI, Spring, HTML, CSS, javascript, Hibernate, Java Mail, JMS, git, jira, jenkins
+}
+\cvitem{
+    \cvdurationstyle{Oct 2012 -- Nov 2014}
+}{
+    \cvtitle{Senior Java Developer}
+
+    1st Line Software, Saint-Petersburg
+    
+    \begin{itemize}[leftmargin=*]
+        \item Bug fixing and refactoring of the existing code, architecture design of the new application, analysis of the requirements.
+        \item Refactoring and review of the bad-structured code. Architecture design of the new application.
+    \end{itemize}
+
+    \textit{Technologies}: Hadoop, HBase, Spring, HTML, CSS, JavaScript, PostgresQL, single page application (RIA), liquibase, maven, svn, git
+}
+\cvitem{
+    \cvdurationstyle{Feb 2012 -- Oct 2012}
+}{
+    \cvtitle{Java Developer}
+
+    Mirantis, Saratov
+    
+    \begin{itemize}[leftmargin=*]
+        \item Bug fixing of the existing project, new functionality design.
+    \end{itemize}
+
+    \textit{Technologies}: Alfresco, swing servlet, javascript (YUI2), ibatis, MS SQL Server, PostgresQL, maven, git, jira
+}
+\cvitem{
+    \cvdurationstyle{May 2011 -- Feb 2012}
+}{
+    \cvtitle{Junior Java Developer}
+    
+    Artezio, Saratov
+    
+    \begin{itemize}[leftmargin=*]
+        \item Bug fixing of the existing projects
+    \end{itemize}
+
+    \textit{Technologies}: swing, spring, hibernate, javasript, maven, svn, jira
+}
+
+
+% education
+% ---------
+
+\cvsection{EDUCATION}
+
+\cvitem{
+    \cvdurationstyle{1998 -- 2002}
+}{
+    \cvtitle{Ph.D's degree in Applied Statistiics}
+
+    Saratov State Technical University
+
+    %\begin{itemize}[leftmargin=*]
+        %\item the theme of thesises was: Structure modeling the object with not numeric properties
+    %\end{itemize}
+}
+\cvitem{
+    \cvdurationstyle{1993 -- 1998}
+}{
+    \cvtitle{Engeneer's degree in Computer Science}
+
+    Saratov State Technical University
+
+    %\begin{itemize}[leftmargin=*]
+        %\item the theme of thesises was: Multidimensional scaling applied for medicine
+    %\end{itemize}
+}
+
+% skills
+% ------
+
+\cvsection{SKILLS}
+
+\vspace{\cvbetweensectionandheadingextraskipamount}
+
+% languages
+\cvitem{
+    \cvheadingstyle{Languages}
+}{
+    Russian -- mother tongue
+
+    English -- upper intermediate
+
+    Czech -- intermediate
+
+    Japanese -- basic
+}
+
+\cvitem{
+    \cvheadingstyle{Social Skills}
+}{
+    Good spoken and written communication skills. Considerable experience of working in multicultural teams.
+}
+\cvitem{
+    \cvheadingstyle{Organizational skills}
+}{
+    Extensive experience in management
+}
+
+% additional info
+% ---------------
+
+\cvsection{ADDITIONAL INFORMATION}
+
+\vspace{\cvbetweensectionandheadingextraskipamount}
+
+% driving licence
+\cvitem{
+    \cvheadingstyle{Driving licence}
+}{
+    B1
+}
+\cvitem{
+    \cvheadingstyle{Travelling passport}
+}{
+    valid till 2030
+}
+\cvitem{
+    \cvheadingstyle{Teaching \& Researching}
+}{
+    11 years (as assistant \& associate professor)
+}
+
+% interests
+\cvitem{
+    \cvheadingstyle{Interests}
+}{
+    Compiler design, Natural Language Processing
+}
+
+\end{document}
