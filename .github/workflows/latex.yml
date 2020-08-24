@@ -14,10 +14,10 @@ jobs:
         # Переименуйте, если у вас другой файл
         root_file: main.tex
         # Больше параметров в офф. документации
-        working_directory: .
+        working_directory: src/main/tex
         # Аргументы, к которыми запускать компилятор (latexmk)
         # -jobname=<name> дает возможность поменять имя выходного файла
-        args: -jobname=my_doc -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+        args: -jobname=cv -pdf -file-line-error -halt-on-error -interaction=nonstopmode
         compiler: latexmk
     # Загружаем собранные pdf-файлы
     - name: Upload pdf document
@@ -27,7 +27,7 @@ jobs:
         name: cv
         # Путь до собранного pdf. Может содержать “*”, “**”
         # Здесь это <working_directory>/<jobname>.pdf
-        path: cv.pdf
+        path: src/main/tex/cv.pdf
   deploy:
     runs-on: ubuntu-latest
     # Деплой будет только на ветке master. Закомментируйте, если не надо
